@@ -10,7 +10,7 @@ export const createDefaultUser = async () => {
         name: "admin",
         email: "admin@admin.com",
         password: bcrypt.hashSync(process.env.DEFAULT_USER_PASSWORD, 10),
-        phone: "111111",
+        phone: "admin",
         address: "CALLE 123",
       };
       const user = await prismaClient.user.findFirst({
