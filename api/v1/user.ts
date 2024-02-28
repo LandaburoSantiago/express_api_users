@@ -1,17 +1,12 @@
-import {
-  deleteUser,
-  getUserById,
-  updateUser,
-} from "./../../controllers/userController";
 import { Router } from "express";
 import {
-  login,
   getAllUsers,
+  login,
+  getUserById,
   createUser,
-  //   deleteUserByEmail,
-  //   getUserById,
-} from "../../controllers/userController";
-
+  updateUser,
+  deleteUser,
+} from "../../services/userService";
 export const publicRouter = Router();
 export const protectedRouter = Router();
 publicRouter.get("/v1/users", getAllUsers);

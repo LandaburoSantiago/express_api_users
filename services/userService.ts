@@ -1,18 +1,27 @@
+import {
+  CreateUserInput,
+  LoginInput,
+  UpdateUserInput,
+  UserLoginResponse,
+  UserResponse,
+} from "./../models/User";
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import moment from "moment";
 import bcrypt from "bcryptjs";
 import { codeErrors, messageErrors } from "../shared/enum-values";
+import { plainToClass } from "class-transformer";
 
 const prismaClient = new PrismaClient();
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await prismaClient.user.findMany();
-  const hashedUsers = users.map((user) => ({
-    ...user,
-    password: undefined,
-  }));
+  const hashedUsers = users.map((user) =>
+    plainToClass(UserResponse, user, {
+      excludeExtraneousValues: true,
+    })
+  );
   res.json(hashedUsers);
 };
 
@@ -30,7 +39,10 @@ export const getUserById = async (req: Request, res: Response) => {
         .status(codeErrors.error)
         .json({ message: messageErrors.userNotFound });
     } else {
-      res.json({ ...user, password: undefined });
+      const response = plainToClass(UserResponse, user, {
+        excludeExtraneousValues: true,
+      });
+      res.json(response);
     }
   } catch (error) {
     res.status(codeErrors.error).json({ message: messageErrors.generalError });
@@ -40,7 +52,9 @@ export const getUserById = async (req: Request, res: Response) => {
 // Login
 
 export const login = async (req: Request, res: Response) => {
-  const { phone, password } = req.body;
+  const { password, phone } = plainToClass(LoginInput, req.body, {
+    excludeExtraneousValues: true,
+  });
 
   try {
     const user = await prismaClient.user.findFirst({
@@ -57,12 +71,19 @@ export const login = async (req: Request, res: Response) => {
         },
         process.env.TOKEN_SECRET || "secreto"
       );
-      res.json({
-        ...user,
-        password: undefined,
-        token_type: "bearer",
-        access_token: token,
-      });
+      const response = plainToClass(
+        UserLoginResponse,
+        {
+          ...user,
+          token_type: "bearer",
+          access_token: token,
+        },
+        {
+          excludeExtraneousValues: true,
+        }
+      );
+
+      res.json(response);
     } else {
       res
         .status(codeErrors.error)
@@ -77,10 +98,13 @@ export const login = async (req: Request, res: Response) => {
 
 // Signup
 export const createUser = async (req: Request, res: Response) => {
-  const { name, email, password, phone, address } = req.body;
-  if (!name || !email || !password || !phone || !address) {
-    res.status(codeErrors.error).json({ message: messageErrors.missingParams });
-  }
+  const { name, email, password, phone, address } = plainToClass(
+    CreateUserInput,
+    req.body,
+    {
+      excludeExtraneousValues: true,
+    }
+  );
   const newUser = {
     name,
     email,
@@ -104,11 +128,18 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, email, password, phone, address } = req.body;
-  const newUser = {
+
+  const { name, email, password, phone, address } = plainToClass(
+    UpdateUserInput,
+    req.body,
+    {
+      excludeExtraneousValues: true,
+    }
+  );
+  const updatedUser = {
     name,
     email,
-    password: bcrypt.hashSync(password, 10),
+    password: password ? bcrypt.hashSync(password, 10) : undefined,
     phone,
     address,
   };
@@ -118,10 +149,10 @@ export const updateUser = async (req: Request, res: Response) => {
         id: Number(id),
       },
       data: {
-        ...newUser,
+        ...updatedUser,
       },
     });
-    res.status(200).json({ ...newUser });
+    res.status(200).json({ ...updatedUser });
   } catch (error) {
     res
       .status(codeErrors.error)
