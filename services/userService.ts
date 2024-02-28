@@ -62,6 +62,7 @@ export const login = async (req: Request, res: Response) => {
         phone,
       },
     });
+
     if (user && bcrypt.compareSync(password, user.password)) {
       const token = jwt.sign(
         {

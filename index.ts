@@ -3,7 +3,6 @@ require("dotenv").config();
 import express from "express";
 import bodyParser from "body-parser";
 import { verifyToken } from "./middlewares/auth";
-import { createDefaultUser } from "./shared/createDefaultUser";
 
 const app = express();
 const port = 3004;
