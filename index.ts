@@ -1,4 +1,5 @@
-import { protectedRouter, publicRouter } from "./api/v1/user";
+import { protectedRouter, publicRouter } from "./api/api/v1/user";
+
 require("dotenv").config();
 import express from "express";
 import bodyParser from "body-parser";
